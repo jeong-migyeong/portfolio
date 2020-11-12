@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- <mapper>의 namespace 속성값을 Mapper 인터페이스와 동일한 이름을 주는 것에 주의 -->
+<mapper namespace="org.zerock.mapper.NoticeAttachMapper">
+
+	<insert id="insert">
+		insert into tbl_attach (uuid, uploadPath, fileName, fileType, bno)
+		values (#{uuid}, #{uploadPath}, #{fileName}, #{fileType}, #{bno})
+	</insert>
+	
+	<delete id="delete">
+		delete from tbl_attach where uuid = #{uuid}
+	</delete>
+	
+	<delete id="deleteAll">
+		delete from tbl_attach where bno = #{bno}
+	</delete>
+	
+	<select id="findByBno" resultType="org.zerock.domain.NoticeAttachVO">
+		select * from tbl_attach where bno = #{bno}
+	</select>
+	
+	<select id="getOldFiles" resultType="org.zerock.domain.NoticeAttachVO">
+		select * from tbl_attach where uploadPath = to_char(sysdate-1, 'yyyy\MM\dd')
+	</select>
+</mapper>

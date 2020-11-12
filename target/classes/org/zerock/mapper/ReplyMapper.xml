@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.zerock.mapper.ReplyMapper">
+
+	<!-- 등록 (Create) -->
+	<insert id="insert">
+	<![CDATA[
+		insert into tbl_reply (rno, bno, reply, replyer)
+		values (seq_reply.nextval, #{bno}, #{reply}, #{replyer})
+	]]>
+	</insert>
+	
+	<!-- 조회 (Read) -->
+	<select id="read" resultType="org.zerock.domain.ReplyVO">
+	<![CDATA[
+		select * from tbl_reply where rno=#{rno}
+	]]>
+	</select>
+
+	<!-- 삭제 (Delete) -->
+	<delete id="delete">
+	<![CDATA[
+		delete from tbl_reply where rno=#{rno}
+	]]>
+	</delete>
+	
+	<!-- 수정 (Update) -->
+	<update id="update">
+	<![CDATA[
+		update tbl_reply set reply=#{reply}, updateDate=sysdate where rno=#{rno}
+	]]>
+	</update>
+	
+	<!-- 댓글 목록 -->
+	<!-- XML에서 #{bno}가 @Param("bno")와 매칭되어서 사용된다. -->
+	<!-- 페이징 처리 -->
+	<select id="getListWithPaging" resultType="org.zerock.domain.ReplyVO">
+	<![CDATA[
+		select rno, bno, reply, replyer, replyDate, updateDate
+		from 
+			(select /*+INDEX(tbl_reply idx_reply*/ rownum rn, bno, rno, reply, replyer, replyDate, updateDate
+			from tbl_reply
+			where bno=#{bno}
+			and rno>0
+			and rownum<=#{cri.pageNum} * #{cri.amount})
+		where rn>(#{cri.pageNum}-1) * #{cri.amount}
+	]]>
+	</select>
+	
+	<!-- 댓글의 숫자 파악 -->
+	<select id="getCountByBno" resultType="int">
+	<![CDATA[
+		select count(rno) from tbl_reply where bno=#{bno}
+	]]>
+	</select>
+
+</mapper>

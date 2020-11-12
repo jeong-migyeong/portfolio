@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper 
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.zerock.mapper.MemberMapper">
+
+	<resultMap type="org.zerock.domain.MemberVO" id="memberMap">
+		<id property="userid" column="userid"/>
+		<result property="userpw" column="userpw"/>
+		<result property="userName" column="userName"/>
+		<result property="regDate" column="regDate"/>
+		<result property="updateDate" column="updateDate"/>
+		<collection property="authList" resultMap="authMap">
+		</collection>		
+	</resultMap>
+	
+	<resultMap type="org.zerock.domain.AuthVO" id="authMap">
+		<result property="userid" column="userid"/>
+		<result property="auth" column="auth"/>
+	</resultMap>
+	
+	<select id="read" resultMap="memberMap">
+		<![CDATA[
+			SELECT mem.userid, userpw, userName, enabled, regDate, updateDate, auth
+			FROM
+			tbl_member mem LEFT OUTER JOIN tbl_member_auth auth on mem.userid = auth.userid
+			WHERE mem.userid = #{userid}
+		]]>
+	</select>
+	
+	<sql id="criteria">
+	<!-- MyBatis는 원하는 속성을 찾을때 getTypeArr()과 같이 이름에 기반을 두어서 검색하기 때문에
+		Criteria에서 만들어둔 getTypeArr()결과인 문자열의 배열이 <foreach>의 대상이 된다.
+		<choose>안쪽의 동적 SQL은 'OR title........OR content........OR writer....' 와 같은 구문을 만든다.
+		<trim>을 이용해서 맨 앞에 생성되는 'OR'를 없애준다. -->
+		<trim prefix="( " suffix=") AND " prefixOverrides="OR">
+			<foreach item="type" collection="typeArr">
+				<trim prefix="OR">
+					<choose>
+						<when test="type == 'T'.toString()">
+							title like '%'||#{keyword}||'%'
+						</when>
+						<when test="type == 'C'.toString()">
+							content like '%'||#{keyword}||'%'
+						</when>
+						<when test="type == 'W'.toString()">
+							writer like '%'||#{keyword}||'%'
+						</when>
+					</choose>
+				</trim>
+			</foreach>
+		</trim>
+	</sql>
+	
+	<select id="getListWithPaging" resultType="org.zerock.domain.MemberVO">
+		<![CDATA[
+			SELECT userid, userpw, userName, enabled, regDate, updateDate, auth
+			FROM (
+			    SELECT rownum rn, a.* FROM
+				    (SELECT 
+				    mem.userid, userpw, userName, enabled, regDate, updateDate, auth
+				    FROM
+				    tbl_member mem LEFT OUTER JOIN tbl_member_auth auth on mem.userid = auth.userid
+				    ORDER BY mem.regDate DESC
+			    ) a
+			where
+		]]>
+		<include refid="criteria"></include>
+		<![CDATA[   		
+				rownum <= #{pageNum} * #{amount}
+			) 
+			WHERE rn > (#{pageNum} - 1) * #{amount}
+		]]>
+	</select>
+	
+	<insert id="insert">
+		<![CDATA[
+			insert into tbl_member (userid, userpw, userName)
+			values (#{userid}, #{userpw}, #{userName})
+		]]>
+	</insert>
+	
+	<!-- insert문이 실행되고 생성된 PK값을 알아야 하는 경우 -->
+	<!-- @SelectKey라는 MyBatis의 어노테이션을 이용
+	주로 PK값을 미리(before) SQL을 통해서 처리해두고 특정한 이름으로 결과를 보관하는 방식
+	#{bno}와 같이 이미 처리된 결과를 이용 -->
+	<insert id="insertSelectKey">
+		<![CDATA[
+			insert into tbl_member (userid, userpw, userName)
+			values (#{userid}, #{userpw}, #{userName})
+		]]>
+	</insert>
+	
+	<insert id="insertAuth">
+		<![CDATA[
+			insert into tbl_member_auth (userid, auth)
+			values (#{userid}, #{auth})
+		]]>
+	</insert>
+	
+	<delete id="remove">
+		<![CDATA[
+			delete from tbl_member where userid=#{userid}
+		]]>
+	</delete>
+	
+	<!-- 8.2.4 update 처리 -->
+	<!-- 최종 수정시간을 현재시간으로 변경 -->
+	<update id="update">
+		<![CDATA[
+			update tbl_member set userid=#{userid},
+				userName=#{userName},
+				updateDate=sysdate
+			where userid=#{userid}
+		]]>
+	</update>
+	
+	<update id="updateAuth">
+		<![CDATA[
+			update tbl_member_auth auth=#{auth}
+			where userid=#{userid}
+		]]>
+	</update>
+	
+	<select id="getTotalCount" resultType="int">
+		<![CDATA[
+			select count(*) from tbl_member
+			where 
+		]]>
+		<include refid="criteria"></include>	
+		
+			enabled = '1'
+	
+	</select>
+	
+</mapper>

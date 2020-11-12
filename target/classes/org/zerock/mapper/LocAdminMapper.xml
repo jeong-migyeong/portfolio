@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+	
+<!-- <mapper>의 namespace 속성값을 Mapper 인터페이스와 동일한 이름을 주는 것에 주의 -->
+<mapper namespace="org.zerock.mapper.LocAdminMapper">
+
+	<select id="getList" resultType="org.zerock.domain.LocAdminVO">
+		<![CDATA[
+			select * from myloc
+		]]>
+	</select>
+	
+	
+</mapper>
